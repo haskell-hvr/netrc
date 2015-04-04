@@ -1,0 +1,48 @@
+# NB: don't set `language: haskell` here
+
+# See also https://github.com/hvr/multi-ghc-travis for more information
+
+env:
+ - CABALVER=1.16 GHCVER=7.4.2
+ - CABALVER=1.16 GHCVER=7.6.3
+ - CABALVER=1.18 GHCVER=7.8.4
+ - CABALVER=1.22 GHCVER=7.10.1
+ - CABALVER=head GHCVER=head
+
+matrix:
+  allow_failures:
+   - env: CABALVER=head GHCVER=head
+
+before_install:
+ - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
+ - travis_retry sudo apt-get update
+ - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
+ - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+
+install:
+ - cabal --version
+ - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
+ - travis_retry cabal update
+ - cabal install --only-dependencies --enable-tests --enable-benchmarks
+
+script:
+ - if [ -f configure.ac ]; then autoreconf -i; fi
+ - cabal configure --enable-tests --enable-benchmarks -v2
+
+ - cabal build
+ - time cabal test --show-details=always
+ - if [ "$CABALVER" != "1.16" ]; then cabal check; fi
+
+ - cabal sdist
+
+ # check that the generated source-distribution can be built & installed
+ - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
+   cd dist/;
+   if [ -f "$SRC_TGZ" ]; then
+      cabal install --force-reinstalls "$SRC_TGZ";
+   else
+      echo "expected '$SRC_TGZ' not found";
+      exit 1;
+   fi
+
+# EOF
