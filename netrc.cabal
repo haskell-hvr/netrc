@@ -19,6 +19,7 @@ description:
   information about @.netrc@ files.
 
 extra-source-files:
+  changelog.md
   src-tests/data/*.netrc
   src-tests/data/*.netrc.out
 
