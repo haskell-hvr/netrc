@@ -1,7 +1,8 @@
 name:                netrc
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Parser for .netrc files
 homepage:            https://github.com/hvr/netrc
+bug-reports:         https://github.com/hvr/netrc/issues
 license:             GPL-3
 license-file:        LICENSE
 author:              Herbert Valerio Riedel
@@ -12,6 +13,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 tested-with:         GHC ==7.10.1, GHC ==7.8.4, GHC ==7.6.3, GHC ==7.4.2
 description:
+  This package provides a parser and a printer for so-called @.netrc@ files.
+  .
   See <http://linux.die.net/man/5/netrc netrc(5)> manual page for more
   information about @.netrc@ files.
 

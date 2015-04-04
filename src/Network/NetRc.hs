@@ -23,9 +23,10 @@
 --
 -- As an extension to the @.netrc@-format as described in .e.g.
 -- <http://linux.die.net/man/5/netrc netrc(5)>, @#@-style comments are
--- supported.  For simplicity, such comments are only allowed between
--- entries.
---
+-- tolerated.  Comments are currently only allowed before, between,
+-- and after @machine@\/@default@\/@macdef@ entries. Be aware though
+-- that such @#@-comment are not supported by all @.netrc@-aware
+-- applications, including @ftp(1)@.
 module Network.NetRc
     ( -- * Types
       NetRc(..)
@@ -53,7 +54,7 @@ import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import           Data.Data
-import           Data.Either (partitionEithers)
+import           Data.Either (rights, lefts)
 import           Data.List (intersperse, foldl')
 import           Data.Monoid
 import           GHC.Generics
@@ -66,25 +67,45 @@ import qualified Text.Parsec.ByteString as P
 --
 -- __Invariant__: fields must not contain any @TAB@s, @SPACE@, or @LF@s.
 data NetRcHost = NetRcHost
-    { nrhName      :: !ByteString -- ^ Remote machine name (@""@ for @default@-entries)
-    , nrhLogin     :: !ByteString -- ^ @login@ property (@""@ if missing)
-    , nrhPassword  :: !ByteString -- ^ @password@ property (@""@ if missing)
-    , nrhAccount   :: !ByteString -- ^ @account@ property (@""@ if missing)
+    { nrhName      :: !ByteString   -- ^ Remote machine name (@""@ for @default@-entries)
+    , nrhLogin     :: !ByteString   -- ^ @login@ property (@""@ if missing)
+    , nrhPassword  :: !ByteString   -- ^ @password@ property (@""@ if missing)
+    , nrhAccount   :: !ByteString   -- ^ @account@ property (@""@ if missing)
+    , nrhMacros    :: [NetRcMacDef] -- ^ associated @macdef@ entries
     } deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 instance NFData NetRcHost where rnf !_ = ()
 
 -- | @macdef@ entries defining @ftp@ macros
 data NetRcMacDef = NetRcMacDef
-    { nrmName :: !ByteString -- ^ Name of @macdef@ entry (__Invariant__: must not contain any @TAB@s, @SPACE@, or @LF@s)
-    , nrmBody :: !ByteString -- ^ Raw @macdef@ body (__Invariant__: must not contain null-lines)
+    { nrmName :: !ByteString -- ^ Name of @macdef@ entry
+                             --
+                             -- __Invariant__: must not contain any @TAB@s, @SPACE@, or @LF@s
+    , nrmBody :: !ByteString -- ^ Raw @macdef@ body
+                             --
+                             -- __Invariant__: must not contain null-lines, i.e. consecutive @LF@s
     } deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 instance NFData NetRcMacDef where rnf !_ = ()
 
 -- | Represents (semantic) contents of a @.netrc@ file
-data NetRc = NetRc [NetRcHost] [NetRcMacDef]
-           deriving (Eq,Ord,Show,Typeable,Data,Generic)
+data NetRc = NetRc
+    { nrHosts  :: [NetRcHost]   -- ^ @machine@\/@default@ entries
+                                --
+                                -- __Note__: If it exists, the
+                                -- @default@ entry ought to be the
+                                -- last entry, otherwise it can cause
+                                -- later entries to become invisible
+                                -- for some implementations
+                                -- (e.g. @ftp(1)@)
+
+    , nrMacros :: [NetRcMacDef] -- ^ Non-associated @macdef@ entries
+                                --
+                                -- __Note__: @macdef@ entries not
+                                -- associated with host-entries are
+                                -- invisible to some applications
+                                -- (e.g. @ftp(1)@).
+    } deriving (Eq,Ord,Show,Typeable,Data,Generic)
 
 instance NFData NetRc where
     rnf (NetRc ms ds) = ms `deepseq` ds `deepseq` ()
@@ -92,16 +113,16 @@ instance NFData NetRc where
 -- | Construct a 'ByteString' 'BB.Builder'
 netRcToBuilder :: NetRc -> BB.Builder
 netRcToBuilder (NetRc ms ds) =
-    mconcat . intersperse nl $ map netRcHostToBuilder ms <> map netRcMacDefToBuilder ds
+    mconcat . intersperse nl $ map netRcMacDefToBuilder ds <> map netRcHostToBuilder ms
   where
     netRcHostToBuilder (NetRcHost {..})
-        = mconcat
+        = mconcat $
           [ mline
           , prop "login"    nrhLogin
           , prop "password" nrhPassword
           , prop "account"  nrhAccount
           , nl
-          ]
+          ] <> (intersperse nl $ map netRcMacDefToBuilder nrhMacros)
       where
         mline | B.null nrhName = BB.byteString "default"
               | otherwise      = BB.byteString "machine" <> spc <> BB.byteString nrhName
@@ -170,12 +191,24 @@ readUserNetRc = do
 
 -- | "Text.Parsec.ByteString" 'P.Parser' for @.netrc@ grammar
 netRcParsec :: P.Parser NetRc
-netRcParsec = (uncurry NetRc . partitionEithers) <$> (wsOrComments0 *> P.sepEndBy netrcEnt wsOrComments1)
+netRcParsec = do
+    entries <- uncurry NetRc . normEnts . splitEithers <$> (wsOrComments0 *> P.sepEndBy netrcEnt wsOrComments1)
+
+    return entries
   where
     wsOrComments0 = P.skipMany comment >> P.skipMany (wsChars1 >> P.skipMany comment)
     wsOrComments1 = P.skipMany1 (wsChars1 >> P.skipMany comment)
 
     netrcEnt = (Left <$> hostEnt) <|> (Right <$> macDefEnt)
+
+    normEnts [] = ([], [])
+    normEnts (([], ms):es) = (normEnts' es, ms)
+    normEnts es = (normEnts' es, [])
+
+    normEnts' :: [([NetRcHost],[NetRcMacDef])] -> [NetRcHost]
+    normEnts' [] = []
+    normEnts' (([], _):_) = error "netRcParsec internal error"
+    normEnts' ((hs, ms):es) = init hs ++ ((last hs) { nrhMacros = ms } : normEnts' es)
 
 macDefEnt :: P.Parser NetRcMacDef
 macDefEnt = do
@@ -193,7 +226,7 @@ hostEnt :: P.Parser NetRcHost
 hostEnt = do
     nam <- mac <|> def
     ps <- P.many (P.try (wsChars1 *> pval))
-    return $! foldl' setFld (NetRcHost nam "" "" "") ps
+    return $! foldl' setFld (NetRcHost nam "" "" "" []) ps
   where
     def = P.try (P.string "default") *> pure ""
 
@@ -203,11 +236,12 @@ hostEnt = do
         tok P.<?> "hostname"
 
     -- pval := ((account|username|password) WS+ <value>)
-    pval = hlp "login" "loginname" PValLogin <|>
-           hlp "account" "accountname" PValAccount <|>
-           hlp "password" "password" PValPassword
+    pval = hlp "login"    PValLogin   <|>
+           hlp "account"  PValAccount <|>
+           hlp "password" PValPassword
       where
-        hlp tnam vnam cons = P.try (P.string tnam) *> wsChars1 *> (cons <$> tok P.<?> vnam)
+        hlp tnam cons = P.try (P.string tnam) *> wsChars1 *>
+                        (cons <$> tok P.<?> (tnam ++ "-value"))
 
     setFld n (PValLogin    v) = n { nrhLogin    = v }
     setFld n (PValAccount  v) = n { nrhAccount  = v }
@@ -239,3 +273,18 @@ skipToEol :: P.Parser ()
 skipToEol = P.skipMany notlf <* (lf <|> P.eof)
   where
     notlf = P.noneOf "\n"
+
+-- | Regroup lst of 'Either's into pair of lists
+splitEithers :: [Either l r] -> [([l], [r])]
+splitEithers = goL
+  where
+    goL []    = []
+    goL es    = let (pfx,es') = span isLeft  es in goR es' (lefts pfx)
+
+    goR [] ls = [(ls,[])]
+    goR es ls = let (pfx,es') = span isRight es in (ls,rights pfx) : goL es'
+
+    isLeft (Left _)  = True
+    isLeft (Right _) = False
+
+    isRight = not . isLeft

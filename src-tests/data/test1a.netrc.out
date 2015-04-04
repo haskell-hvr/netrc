@@ -1,1 +1,1 @@
-Right (NetRc [NetRcHost {nrhName = "host1.domain.com", nrhLogin = "log1", nrhPassword = "pass1", nrhAccount = "acct1"},NetRcHost {nrhName = "", nrhLogin = "log2", nrhPassword = "pass2", nrhAccount = ""}] [])
+Right (NetRc {nrHosts = [NetRcHost {nrhName = "host1.domain.com", nrhLogin = "log1", nrhPassword = "pass1", nrhAccount = "acct1", nrhMacros = []},NetRcHost {nrhName = "", nrhLogin = "log2", nrhPassword = "pass2", nrhAccount = "", nrhMacros = []}], nrMacros = []})
