@@ -4,3 +4,5 @@
 /cabal.sandbox.config
 /dist/
 /.cabal-sandbox/
+/dist-newstyle/
+/.ghc.environment.*
