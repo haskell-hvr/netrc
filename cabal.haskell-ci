@@ -1,2 +1,13 @@
 branches: master ci*
 installed: +all -bytestring -directory -process -unix
+
+constraint-set bytestring-0.12
+  ghc: >= 8.2
+  constraints: bytestring >= 0.12
+  tests: True
+  run-tests: True
+
+-- This is needed for the bytestring-0.12 constraint set as of 2021-07-12
+raw-project
+  allow-newer: parsec:bytestring
+  allow-newer: unix:bytestring
