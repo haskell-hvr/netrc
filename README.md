@@ -1,4 +1,5 @@
-`netrc` [![Hackage](https://img.shields.io/hackage/v/netrc.svg)](https://hackage.haskell.org/package/netrc) [![Build Status](https://travis-ci.org/hvr/netrc.svg?branch=master)](https://travis-ci.org/hvr/netrc)
-=======
+ `netrc`
+[![Hackage](https://img.shields.io/hackage/v/netrc.svg?color=informational)](https://hackage.haskell.org/package/netrc) [![Stackage LTS](https://stackage.org/package/netrc/badge/lts)](https://stackage.org/lts/package/netrc) [![Stackage Nightly](https://stackage.org/package/netrc/badge/nightly)](https://stackage.org/nightly/package/netrc) [![Haskell-CI](https://github.com/haskell-hvr/netrc/actions/workflows/haskell-ci.yml/badge.svg)](https://github.com/haskell-hvr/netrc/actions/workflows/haskell-ci.yml)
+========
 
 See http://hackage.haskell.org/package/netrc for documentation
