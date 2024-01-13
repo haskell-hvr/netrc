@@ -238,10 +238,14 @@ hostEnt = do
     -- pval := ((account|username|password) WS+ <value>)
     pval = hlp "login"    PValLogin   <|>
            hlp "account"  PValAccount <|>
-           hlp "password" PValPassword
+           hlpPassword
       where
         hlp tnam cons = P.try (P.string tnam) *> wsChars1 *>
                         (cons <$> tok P.<?> (tnam ++ "-value"))
+        hlpPassword   = P.try (P.string "password") *> wsChars1 *>
+                        (PValPassword <$> password P.<?> "password-value")
+        password = P.try quotedPassword <|> tok
+
 
     setFld n (PValLogin    v) = n { nrhLogin    = v }
     setFld n (PValAccount  v) = n { nrhAccount  = v }
@@ -249,6 +253,14 @@ hostEnt = do
 
 tok :: P.Parser ByteString
 tok = BC.pack <$> P.many1 notWsChar P.<?> "token"
+
+quotedPassword :: P.Parser ByteString
+quotedPassword = do
+  BC.pack <$> (P.string "\"\"" *> P.many chars <* P.string "\"\"")
+  where
+    chars = escaped <|> P.noneOf "\""
+    escaped = P.char '\\' >> P.choice [ P.char '\\' >> return '\\'
+                                      , P.char '"'  >> return '"' ]
 
 data PVal = PValLogin    !ByteString
           | PValAccount  !ByteString
@@ -288,3 +300,4 @@ splitEithers = goL
     isLeft (Right _) = False
 
     isRight = not . isLeft
+  
