@@ -1,1 +1,1 @@
-default login abc password unescape \ backslash
+default login abc password ""unescape \\ backslash""

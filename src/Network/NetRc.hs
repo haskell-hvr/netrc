@@ -123,7 +123,7 @@ netRcToBuilder (NetRc ms ds) =
         = mconcat $
           [ mline
           , prop "login"    nrhLogin
-          , prop "password" nrhPassword
+          , propPassword    nrhPassword
           , prop "account"  nrhAccount
           , nl
           ] <> (intersperse nl $ map netRcMacDefToBuilder nrhMacros)
@@ -133,6 +133,18 @@ netRcToBuilder (NetRc ms ds) =
 
         prop lab val | B.null val = mempty
                      | otherwise  = spc <> BB.byteString lab <> spc <> BB.byteString val
+        propPassword val | B.null val = mempty
+                         | otherwise  = spc <> BB.byteString "password" <> spc <> passwordValString val
+        passwordValString :: ByteString -> BB.Builder
+        passwordValString val =
+            if B.any (\c -> c == charToW8 ' ' || c == charToW8 '\t') val then
+              BB.byteString "\"\"" <> BB.byteString (BC.concatMap (BC.pack . escape) val) <> BB.byteString "\"\""
+            else BB.byteString val
+          where
+            escape '\\' = "\\\\"
+            escape '\"' = "\\\""
+            escape x    = [ x ]
+            charToW8 = toEnum . fromEnum
 
     netRcMacDefToBuilder (NetRcMacDef {..})
         = BB.byteString "macdef" <> spc <> BB.byteString nrmName <>
