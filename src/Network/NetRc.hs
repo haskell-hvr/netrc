@@ -27,6 +27,10 @@
 -- and after @machine@\/@default@\/@macdef@ entries. Be aware though
 -- that such @#@-comment are not supported by all @.netrc@-aware
 -- applications, including @ftp(1)@.
+--
+-- Passwords can contain spaces only if they are double-quoted, in which
+-- case backslashes and quotes are to be escaped with a preceding backslash.
+
 module Network.NetRc
     ( -- * Types
       NetRc(..)
