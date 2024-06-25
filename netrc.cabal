@@ -1,7 +1,6 @@
 cabal-version:       >=1.10
 name:                netrc
-version:             0.2.0.0
-x-revision:          13
+version:             0.2.0.1
 synopsis:            Parser for .netrc files
 homepage:            https://github.com/haskell-hvr/netrc
 bug-reports:         https://github.com/haskell-hvr/netrc/issues
@@ -20,9 +19,9 @@ description:
 
 
 tested-with:
-  GHC == 9.10.0
+  GHC == 9.10.1
   GHC == 9.8.2
-  GHC == 9.6.4
+  GHC == 9.6.5
   GHC == 9.4.8
   GHC == 9.2.8
   GHC == 9.0.2
@@ -73,7 +72,7 @@ test-suite test-netrc
     , bytestring
     , tasty                 >= 0.10       && < 1.6
     , tasty-golden          == 2.3.*
-    , tasty-quickcheck      >= 0.8.1      && < 0.11
+    , tasty-quickcheck      >= 0.8.1      && < 1
 
 source-repository head
   type: git
