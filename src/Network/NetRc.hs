@@ -72,7 +72,7 @@ data NetRcHost = NetRcHost
     , nrhPassword  :: !ByteString   -- ^ @password@ property (@""@ if missing)
     , nrhAccount   :: !ByteString   -- ^ @account@ property (@""@ if missing)
     , nrhMacros    :: [NetRcMacDef] -- ^ associated @macdef@ entries
-    } deriving (Eq,Ord,Show,Typeable,Data,Generic)
+    } deriving (Eq, Ord, Show, Data, Generic)
 
 instance NFData NetRcHost where rnf !_ = ()
 
@@ -84,7 +84,7 @@ data NetRcMacDef = NetRcMacDef
     , nrmBody :: !ByteString -- ^ Raw @macdef@ body
                              --
                              -- __Invariant__: must not contain null-lines, i.e. consecutive @LF@s
-    } deriving (Eq,Ord,Show,Typeable,Data,Generic)
+    } deriving (Eq, Ord, Show, Data, Generic)
 
 instance NFData NetRcMacDef where rnf !_ = ()
 
@@ -105,7 +105,7 @@ data NetRc = NetRc
                                 -- associated with host-entries are
                                 -- invisible to some applications
                                 -- (e.g. @ftp(1)@).
-    } deriving (Eq,Ord,Show,Typeable,Data,Generic)
+    } deriving (Eq, Ord, Show, Data, Generic)
 
 instance NFData NetRc where
     rnf (NetRc ms ds) = ms `deepseq` ds `deepseq` ()
