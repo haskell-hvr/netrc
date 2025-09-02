@@ -1,3 +1,12 @@
+## 0.2.0.2
+
+_Andreas Abel, 2025-09-02_
+
+  - Remove obsolete `deriving Typeable`.
+  - Remove old code for GHC 7.
+  - Fix warnings.
+  - Tested with GHC 8.0 - 9.14 alpha1.
+
 ## 0.2.0.1
 
 _Andreas Abel, 2024-06-25_

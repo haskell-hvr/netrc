@@ -39,13 +39,13 @@ main = do
     let goTests = testGroup "ref-samples"
                   [ goldenVsString tn (fp++".out") (doGoTest fp)
                   | fp <- sort netrcFiles
-                  , let Just tn = stripPrefix "src-tests/data/" fp
+                  , let tn = fromMaybe undefined $ stripPrefix "src-tests/data/" fp
                   ]
 
     let goTests2 = testGroup "ref-samples2"
                   [ goldenVsString tn (fp++".out2") (doGoTest2 fp)
                   | fp <- sort netrcFiles
-                  , let Just tn = stripPrefix "src-tests/data/" fp
+                  , let tn = fromMaybe undefined $ stripPrefix "src-tests/data/" fp
                   ]
 
     defaultMain $ testGroup "Tests" [goTests, goTests2, qcTests]

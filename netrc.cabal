@@ -1,6 +1,6 @@
-cabal-version:       >=1.10
+cabal-version:       1.18
 name:                netrc
-version:             0.2.0.1
+version:             0.2.0.2
 synopsis:            Parser for .netrc files
 homepage:            https://github.com/haskell-hvr/netrc
 bug-reports:         https://github.com/haskell-hvr/netrc/issues
@@ -19,6 +19,7 @@ description:
 
 
 tested-with:
+  GHC == 9.14.1
   GHC == 9.12.2
   GHC == 9.10.2
   GHC == 9.8.4
@@ -33,8 +34,10 @@ tested-with:
   GHC == 8.2.2
   GHC == 8.0.2
 
-extra-source-files:
+extra-doc-files:
   changelog.md
+
+extra-source-files:
   src-tests/data/*.netrc
   src-tests/data/*.netrc.out
 
@@ -48,11 +51,12 @@ library
     OverloadedStrings
     RecordWildCards
 
+  -- Lower bounds taken from GHC 8.0 and Stackage LTS 7.0
   build-depends:
       base                  >= 4.9        && < 5
-    , deepseq               >= 1.3        && < 1.6
-    , bytestring            >= 0.10.4     && < 0.13
-    , parsec                >= 3.1        && < 3.2
+    , deepseq               >= 1.4.2.0    && < 1.6
+    , bytestring            >= 0.10.8.0   && < 0.13
+    , parsec                >= 3.1.11     && < 3.2
 
   hs-source-dirs: src
   exposed-modules: Network.NetRc
@@ -71,9 +75,9 @@ test-suite test-netrc
       netrc
     , base
     , bytestring
-    , tasty                 >= 0.10       && < 1.6
+    , tasty                 >= 0.11.0.4   && < 1.6
     , tasty-golden          == 2.3.*
-    , tasty-quickcheck      >= 0.8.1      && < 1
+    , tasty-quickcheck      >= 0.8.4      && < 1
 
 source-repository head
   type: git
