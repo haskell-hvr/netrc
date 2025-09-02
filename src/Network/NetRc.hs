@@ -55,8 +55,13 @@ import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString.Lazy as LB
 import           Data.Data
 import           Data.Either (rights, lefts)
-import           Data.List (intersperse, foldl')
-import           Data.Monoid
+import           Data.List (intersperse)
+#if !MIN_VERSION_base(4,20,0)
+import           Data.List (foldl')
+#endif
+#if !MIN_VERSION_base(4,11,0)
+import           Data.Semigroup ((<>))
+#endif
 import           GHC.Generics
 import           System.Environment
 import           System.IO.Error
@@ -142,12 +147,7 @@ netRcToBuilder (NetRc ms ds) =
 --
 -- This is currently just a convenience wrapper around 'netRcToBuilder'
 netRcToByteString :: NetRc -> ByteString
-#if MIN_VERSION_bytestring(0,10,0)
 netRcToByteString = LB.toStrict . BB.toLazyByteString . netRcToBuilder
-#else
-netRcToByteString = B.concat . LB.toChunks . BB.toLazyByteString . netRcToBuilder
-#endif
-
 
 -- | Convenience wrapper for 'netRcParsec' parser
 --
@@ -162,7 +162,6 @@ netRcToByteString = B.concat . LB.toChunks . BB.toLazyByteString . netRcToBuilde
 --
 parseNetRc :: P.SourceName -> ByteString -> Either P.ParseError NetRc
 parseNetRc = P.parse (netRcParsec <* P.eof)
-
 
 -- | Reads and parses default @$HOME/.netrc@
 --
@@ -184,10 +183,6 @@ readUserNetRc = do
                 Left e | isDoesNotExistError e -> return Nothing
                        | otherwise             -> ioError e
                 Right b -> return $! Just $! parseNetRc fn b
-#if !(MIN_VERSION_base(4,6,0))
-  where
-    lookupEnv k = lookup k <$> getEnvironment
-#endif
 
 -- | "Text.Parsec.ByteString" 'P.Parser' for @.netrc@ grammar
 netRcParsec :: P.Parser NetRc
