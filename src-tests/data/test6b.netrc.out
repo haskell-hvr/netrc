@@ -1,0 +1,1 @@
+Right (NetRc {nrHosts = [NetRcHost {nrhName = "", nrhLogin = "abc", nrhPassword = "multi-word password", nrhAccount = "", nrhMacros = []}], nrMacros = []})
